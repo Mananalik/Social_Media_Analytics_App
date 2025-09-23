@@ -3,9 +3,9 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import redis
 from rq import Queue
-from worker import analyze_and_save_comment
 from fastapi.middleware.cors import CORSMiddleware
-
+from urllib.parse import urlparse, parse_qs
+from worker import fetch_and_analyze_comments
 app = FastAPI()
 
 origins=[
@@ -24,7 +24,7 @@ redis_conn = redis.Redis(host='localhost', port=6379)
 q = Queue(connection=redis_conn)
 
 class CommentPayload(BaseModel):
-    text:str
+    url:str
 
 
 @app.get("/")
@@ -34,8 +34,14 @@ def read_root():
 
 @app.post("/start-analysis")
 def start_analysis(payload: CommentPayload):
-    job = q.enqueue(analyze_and_save_comment, payload.text)
+    parsed_url = urlparse(payload.url)
+    video_id = parse_qs(parsed_url.query).get('v')
+    if not video_id:
+        return {"error": "Invalid YouTube URL. 'v' parameter not found."}
+    video_id = video_id[0]
+    job = q.enqueue(fetch_and_analyze_comments, payload.url,video_id)
     return{
         "message":"Analysis job has been queued successfully.",
-        "job_id": job.id
+        "job_id": job.id,
+        "video_id": video_id
     }

@@ -16,7 +16,7 @@ export default function HomePage(){
         headers:{
           'Content-Type':'application/json',
         },
-        body: JSON.stringify({text: url}),
+        body: JSON.stringify({url: url}),
       });
 
       if(!response.ok){
