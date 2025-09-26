@@ -1,7 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
+import SentimentChart from '../components/SentimentChart';
+import KeywordCloud from '../components/KeywordCloud';
+const processResults = (results)=>{
+  if(!results || results.length === 0){
+    return {positive:0, negative:0,total:0};
+  }
+  const positiveCount = results.filter(r=>r.sentiment_label === 'POSITIVE').length;
+  const total = results.length;
+  const positivePercentage = ((positiveCount / total) * 100).toFixed(1);
+  const negativePercentage = (100 - positivePercentage).toFixed(1);
+  return{
+    positive: positivePercentage,
+    negative: negativePercentage,
+    total: total
+  };
+};
 export default function HomePage() {
   const [url, setUrl] = useState('');
   const [jobId, setJobId] = useState(null);
@@ -55,11 +70,10 @@ export default function HomePage() {
       setStatus('error');
     }
   };
-
+  const sentimentStats = processResults(results);
   return (
     <main style={{ fontFamily: 'sans-serif', textAlign: 'center', marginTop: '50px' }}>
       <h1>Social Media Analytics Dashboard</h1>
-      <p style={{ color: '#555' }}>Paste a YouTube video URL below to analyze its comments.</p>
       <div style={{ marginTop: '30px' }}>
         <input
           type="text"
@@ -82,11 +96,11 @@ export default function HomePage() {
       {status === 'error' && <p style={{ color: 'red' }}>An error occurred during analysis.</p>}
 
       {status === 'success' && (
-        <div style={{ marginTop: '40px', textAlign: 'left', display: 'inline-block' }}>
+        <div style={{ marginTop: '40px', width: '100%', maxWidth: '700px', display: 'inline-block' }}>
           <h2>Analysis Complete!</h2>
-          <pre style={{ background: '#f0f0f0', padding: '10px', borderRadius: '5px', maxHeight: '400px', overflowY: 'auto' }}>
-            {JSON.stringify(results, null, 2)}
-          </pre>
+          <SentimentChart data={results} />
+          <hr style={{ margin: '40px 0' }} />
+          <KeywordCloud data={results} />
         </div>
       )}
     </main>
