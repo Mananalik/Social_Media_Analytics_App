@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import SentimentChart from '../components/SentimentChart';
 import KeywordCloud from '../components/KeywordCloud';
+import QuestionsList from '../components/QuestionList';
+import styles from './page.module.css';
 const processResults = (results)=>{
   if(!results || results.length === 0){
     return {positive:0, negative:0,total:0};
@@ -22,6 +24,8 @@ export default function HomePage() {
   const [jobId, setJobId] = useState(null);
   const [results, setResults] = useState(null);
   const [status, setStatus] = useState('idle'); 
+
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const checkJobStatus = async (id) => {
     try {
@@ -72,35 +76,63 @@ export default function HomePage() {
   };
   const sentimentStats = processResults(results);
   return (
-    <main style={{ fontFamily: 'sans-serif', textAlign: 'center', marginTop: '50px' }}>
+    <main>
       <h1>Social Media Analytics Dashboard</h1>
-      <div style={{ marginTop: '30px' }}>
+
+      {/* 2. APPLY THE NEW STYLES */}
+      <div className={styles.formContainer}>
         <input
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Enter YouTube URL here"
-          style={{ padding: '10px', width: '400px', marginRight: '10px' }}
+          className={styles.urlInput}
           disabled={status === 'loading'}
         />
         <button
           onClick={handleAnalyzeClick}
-          style={{ padding: '10px 15px', cursor: 'pointer' }}
+          className={styles.analyzeButton}
           disabled={status === 'loading'}
         >
           {status === 'loading' ? 'Analyzing...' : 'Analyze'}
         </button>
       </div>
 
-      {status === 'loading' && <p>Analysis in progress... Job ID: {jobId}</p>}
-      {status === 'error' && <p style={{ color: 'red' }}>An error occurred during analysis.</p>}
+      {status === 'loading' && <p>Analysis in progress...</p>}
+      {status === 'error' && <p style={{ color: '#F44336' }}>An error occurred.</p>}
 
       {status === 'success' && (
-        <div style={{ marginTop: '40px', width: '100%', maxWidth: '700px', display: 'inline-block' }}>
+        <div style={{ marginTop: '40px' }}>
           <h2>Analysis Complete!</h2>
-          <SentimentChart data={results} />
-          <hr style={{ margin: '40px 0' }} />
-          <KeywordCloud data={results} />
+          
+          <div className={styles.tabsContainer}>
+            <button 
+              onClick={() => setActiveTab('dashboard')}
+              className={activeTab === 'dashboard' ? styles.tabButtonActive : styles.tabButton}
+            >
+              Dashboard
+            </button>
+            <button 
+              onClick={() => setActiveTab('questions')}
+              className={activeTab === 'questions' ? styles.tabButtonActive : styles.tabButton}
+            >
+              Questions
+            </button>
+          </div>
+
+          {activeTab === 'dashboard' && (
+            <div>
+              <SentimentChart data={results} />
+              <hr />
+              <KeywordCloud data={results} />
+            </div>
+          )}
+
+          {activeTab === 'questions' && (
+            <div>
+              <QuestionsList data={results} />
+            </div>
+          )}
         </div>
       )}
     </main>
